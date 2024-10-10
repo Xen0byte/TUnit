@@ -3,12 +3,9 @@ using TUnit.Assertions.AssertConditions.Operators;
 
 namespace TUnit.Assertions.AssertionBuilders;
 
-public class InvokableValueAssertionBuilder<TActual> : InvokableAssertionBuilder<TActual>
+public class InvokableValueAssertionBuilder<TActual>(InvokableAssertionBuilder<TActual> invokableAssertionBuilder)
+    : InvokableAssertionBuilder<TActual>(invokableAssertionBuilder.AssertionDataDelegate, invokableAssertionBuilder)
 {
-    internal InvokableValueAssertionBuilder(InvokableAssertionBuilder<TActual> invokableAssertionBuilder) : base(invokableAssertionBuilder.AssertionDataDelegate, invokableAssertionBuilder)
-    {
-    }
-
     /// <summary>
     /// Provide a reason explaining why the assertion is needed.<br />
     /// If the phrase does not start with the word <i>because</i>, it is prepended automatically.
@@ -16,10 +13,8 @@ public class InvokableValueAssertionBuilder<TActual> : InvokableAssertionBuilder
     public InvokableValueAssertionBuilder<TActual> Because(string reason)
     {
         var becauseReason = new BecauseReason(reason);
-        foreach (var assertion in Assertions)
-        {
-            assertion.SetBecauseReason(becauseReason);
-        }
+        var assertion = Assertions.Peek();
+        assertion.SetBecauseReason(becauseReason);
         return this;
     }
 

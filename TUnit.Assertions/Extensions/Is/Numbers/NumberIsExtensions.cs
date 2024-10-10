@@ -5,10 +5,11 @@ using System.Runtime.CompilerServices;
 using TUnit.Assertions.AssertConditions;
 using TUnit.Assertions.AssertConditions.Generic;
 using TUnit.Assertions.AssertConditions.Interfaces;
+using TUnit.Assertions.AssertConditions.Numbers;
 using TUnit.Assertions.AssertionBuilders;
 using TUnit.Assertions.AssertionBuilders.Wrappers;
 
-namespace TUnit.Assertions.Extensions.Numbers;
+namespace TUnit.Assertions.Extensions;
 
 public static class NumberIsExtensions
 {
@@ -17,7 +18,7 @@ public static class NumberIsExtensions
         [CallerArgumentExpression("expected")] string doNotPopulateThisValue1 = "")
         where TActual : INumber<TActual>
     {
-        var assertionBuilder = valueSource.RegisterAssertion(new NumericEqualsAssertCondition<TActual>(expected)
+        var assertionBuilder = valueSource.RegisterAssertion(new NumericEqualsExpectedValueAssertCondition<TActual>(expected)
             , [doNotPopulateThisValue1]);
         
         return new NumberEqualToAssertionBuilderWrapper<TActual>(assertionBuilder);
@@ -27,90 +28,15 @@ public static class NumberIsExtensions
         this IValueSource<TActual> valueSource)
         where TActual : INumber<TActual>
     {
-        return valueSource.RegisterAssertion(new EqualsAssertCondition<TActual>(TActual.Zero)
+        return valueSource.RegisterAssertion(new EqualsExpectedValueAssertCondition<TActual>(TActual.Zero)
             , []);
-    }
-
-    public static InvokableValueAssertionBuilder<TActual> IsGreaterThan<TActual>(
-        this IValueSource<TActual> valueSource, TActual expected,
-        [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "") where TActual : INumber<TActual>
-    {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(expected, (value, _, _, self) =>
-                {
-                    if (value is null)
-                    {
-                        self.OverriddenMessage = $"{self.ActualExpression ?? typeof(TActual).Name} is null";
-                        return false;
-                    }
-
-                    return value > expected;
-                },
-                (value, _, _) => $"{value} was not greater than {expected}")
-            , [doNotPopulateThisValue]);
-    }
-
-    public static InvokableValueAssertionBuilder<TActual> IsGreaterThanOrEqualTo<TActual>(
-        this IValueSource<TActual> valueSource, TActual expected,
-        [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "")
-        where TActual : INumber<TActual>
-    {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
-                {
-                    if (value is null)
-                    {
-                        self.OverriddenMessage = $"{valueSource.AssertionBuilder.ActualExpression ?? typeof(TActual).Name} is null";
-                        return false;
-                    }
-
-                    return value >= expected;
-                },
-                (value, _, _) => $"{value} was not greater than or equal to {expected}")
-            , [doNotPopulateThisValue]);
-    }
-
-    public static InvokableValueAssertionBuilder<TActual> IsLessThan<TActual>(
-        this IValueSource<TActual> valueSource, TActual expected,
-        [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "")
-        where TActual : INumber<TActual>
-    {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
-                {
-                    if (value is null)
-                    {
-                        self.OverriddenMessage = $"{valueSource.AssertionBuilder.ActualExpression ?? typeof(TActual).Name} is null";
-                        return false;
-                    }
-
-                    return value < expected;
-                },
-                (value, _, _) => $"{value} was not less than {expected}")
-            , [doNotPopulateThisValue]);
-    }
-
-    public static InvokableValueAssertionBuilder<TActual> IsLessThanOrEqualTo<TActual>(
-        this IValueSource<TActual> valueSource, TActual expected,
-        [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "")
-        where TActual : INumber<TActual>
-    {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
-                {
-                    if (value is null)
-                    {
-                        self.OverriddenMessage = $"{valueSource.AssertionBuilder.ActualExpression ?? typeof(TActual).Name} is null";
-                        return false;
-                    }
-
-                    return value <= expected;
-                },
-                (value, _, _) => $"{value} was not less than or equal to {expected}")
-            , [doNotPopulateThisValue]);
     }
     
     public static InvokableValueAssertionBuilder<TActual> IsDivisibleBy<TActual>(
         this IValueSource<TActual> valueSource, TActual expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "")
         where TActual : INumber<TActual>, IModulusOperators<TActual, TActual, TActual>
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<TActual, TActual>(default, (value, _, self) =>
                 {
                     if (value is null)
                     {
@@ -128,7 +54,7 @@ public static class NumberIsExtensions
         this IValueSource<TActual> valueSource)
         where TActual : INumber<TActual>, IModulusOperators<TActual, TActual, TActual>
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<TActual, TActual>(default, (value, _, self) =>
                 {
                     if (value is null)
                     {
@@ -145,7 +71,7 @@ public static class NumberIsExtensions
     public static InvokableValueAssertionBuilder<TActual> IsOdd<TActual>(this IValueSource<TActual> valueSource)
         where TActual : INumber<TActual>, IModulusOperators<TActual, TActual, TActual>
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<TActual, TActual>(default, (value, _, self) =>
                 {
                     if (value is null)
                     {
@@ -163,7 +89,7 @@ public static class NumberIsExtensions
         this IValueSource<TActual> valueSource)
         where TActual : INumber<TActual>
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<TActual, TActual>(default, (value, _, self) =>
                 {
                     if (value is null)
                     {
@@ -181,7 +107,7 @@ public static class NumberIsExtensions
         this IValueSource<TActual> valueSource)
         where TActual : INumber<TActual>
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<TActual, TActual>(default, (value, _, _, self) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<TActual, TActual>(default, (value, _, self) =>
                 {
                     if (value is null)
                     {

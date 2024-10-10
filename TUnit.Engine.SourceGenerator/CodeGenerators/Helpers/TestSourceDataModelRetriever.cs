@@ -48,7 +48,7 @@ internal static class TestSourceDataModelRetriever
     }
 
     private static IEnumerable<TestSourceDataModel> GenerateTestSourceDataModels(IMethodSymbol methodSymbol, INamedTypeSymbol namedTypeSymbol,
-        ArgumentsContainer classArguments, int runCount, AttributeData testAttribute, ArgumentsContainer testArguments, ClassPropertiesContainer classPropertiesContainer)
+        BaseContainer classArguments, int runCount, AttributeData testAttribute, BaseContainer testArguments, ClassPropertiesContainer classPropertiesContainer)
     {
         if (classArguments is EmptyArgumentsContainer)
         {
@@ -69,7 +69,7 @@ internal static class TestSourceDataModelRetriever
 
     private static IEnumerable<TestSourceDataModel> GenerateSingleClassInstance(IMethodSymbol methodSymbol,
         INamedTypeSymbol namedTypeSymbol, int runCount, AttributeData testAttribute,
-        ArgumentsContainer testArguments,
+        BaseContainer testArguments,
         ClassPropertiesContainer classPropertiesContainer)
     {
         for (var i = 0; i < runCount; i++)
@@ -78,10 +78,7 @@ internal static class TestSourceDataModelRetriever
             {
                     MethodSymbol = methodSymbol,
                     ClassSymbol = namedTypeSymbol,
-                    ClassArguments = new EmptyArgumentsContainer(ArgumentsType.ClassConstructor)
-                    {
-                        DisposeAfterTest = false,
-                    },
+                    ClassArguments = new EmptyArgumentsContainer(),
                     TestArguments = testArguments,
                     CurrentRepeatAttempt = i,
                     TestAttribute = testAttribute,
@@ -91,8 +88,8 @@ internal static class TestSourceDataModelRetriever
     }
 
     private static IEnumerable<TestSourceDataModel> GenerateMultipleClassInstances(IMethodSymbol methodSymbol,
-        INamedTypeSymbol namedTypeSymbol, int runCount, AttributeData testAttribute, ArgumentsContainer classArguments,
-        ArgumentsContainer testArguments,
+        INamedTypeSymbol namedTypeSymbol, int runCount, AttributeData testAttribute, BaseContainer classArguments,
+        BaseContainer testArguments,
         ClassPropertiesContainer classPropertiesContainer)
     {
         for (var i = 0; i < runCount; i++)
@@ -117,8 +114,19 @@ internal static class TestSourceDataModelRetriever
         var classArguments = testGenerationContext.ClassArguments;
         var testArguments = testGenerationContext.TestArguments;
         var testAttribute = testGenerationContext.TestAttribute;
-        
-        var allAttributes = methodSymbol.GetAttributesIncludingClass(namedTypeSymbol);
+
+        AttributeData[] allAttributes =
+        [
+            ..methodSymbol.GetAttributes(),
+            ..namedTypeSymbol.GetAttributesIncludingBaseTypes(),
+            ..namedTypeSymbol.ContainingAssembly.GetAttributes()
+        ];
+
+        var propertyAttributes = testGenerationContext.PropertyArguments
+            .InnerContainers
+            .Select(x => x.PropertySymbol)
+            .SelectMany(x => x.GetAttributes())
+            .Where(x => x.IsDataSourceAttribute());
         
         return new TestSourceDataModel
         {
@@ -139,7 +147,8 @@ internal static class TestSourceDataModelRetriever
             HasTimeoutAttribute = allAttributes.Any(x => x.AttributeClass?.IsOrInherits(WellKnownFullyQualifiedClassNames.TimeoutAttribute.WithGlobalPrefix) == true),
             TestExecutor = allAttributes.FirstOrDefault(x => x.AttributeClass?.IsOrInherits("global::TUnit.Core.Executors.TestExecutorAttribute") == true)?.AttributeClass?.TypeArguments.FirstOrDefault()?.ToDisplayString(DisplayFormats.FullyQualifiedGenericWithGlobalPrefix),
             ParallelLimit = allAttributes.FirstOrDefault(x => x.AttributeClass?.IsOrInherits("global::TUnit.Core.ParallelLimiterAttribute") == true)?.AttributeClass?.TypeArguments.FirstOrDefault()?.ToDisplayString(DisplayFormats.FullyQualifiedGenericWithGlobalPrefix),
-            AttributeTypes = allAttributes.Select(x => x.AttributeClass?.ToDisplayString(DisplayFormats.FullyQualifiedGenericWithGlobalPrefix)).OfType<string>().Distinct().ToArray(), 
+            AttributeTypes = allAttributes.Select(x => x.AttributeClass?.ToDisplayString(DisplayFormats.FullyQualifiedGenericWithGlobalPrefix)).OfType<string>().Distinct().ToArray(),
+            PropertyAttributeTypes = propertyAttributes.Select(x => x.AttributeClass?.ToDisplayString(DisplayFormats.FullyQualifiedGenericWithGlobalPrefix)).OfType<string>().ToArray(),
             PropertyArguments = testGenerationContext.PropertyArguments,
         };
     }

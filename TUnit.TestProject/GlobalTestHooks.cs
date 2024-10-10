@@ -1,7 +1,5 @@
 ﻿using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using TUnit.Assertions.Extensions.Generic;
-using TUnit.Assertions.Extensions.Strings;
 
 namespace TUnit.TestProject;
 
@@ -47,6 +45,6 @@ public class GlobalTestHooksTests
     {
         await Assert.That(TestContext.Current?.ObjectBag).HasCount().EqualTo(1);
         await Assert.That(TestContext.Current?.ObjectBag.First().Key).IsEqualTo("SetUpCustomTestNameProperty");
-        await Assert.That(TestContext.Current?.ObjectBag.First().Value).IsEqualTo("SetUpTest1");
+        await Assert.That(TestContext.Current?.ObjectBag.First().Value).IsEquatableOrEqualTo("SetUpTest1");
     }
 }

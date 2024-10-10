@@ -1,4 +1,4 @@
-﻿using TUnit.Assertions.AssertConditions.String;
+﻿using TUnit.Assertions.AssertConditions;
 
 namespace TUnit.Assertions.AssertionBuilders.Wrappers;
 
@@ -10,28 +10,49 @@ public class StringEqualToAssertionBuilderWrapper : InvokableValueAssertionBuild
 
     public StringEqualToAssertionBuilderWrapper WithTrimming()
     {
-        var assertion = (StringEqualsAssertCondition) Assertions.Peek();
+        var assertion = (ExpectedValueAssertCondition<string, string>) Assertions.Peek();
 
-        assertion.Trimmed();
+        assertion.WithTransform(s => s?.Trim(), s => s?.Trim());
+        
+        AppendCallerMethod([]);
         
         return this;
     }
     
     public StringEqualToAssertionBuilderWrapper WithNullAndEmptyEquality()
     {
-        var assertion = (StringEqualsAssertCondition) Assertions.Peek();
+        var assertion = (ExpectedValueAssertCondition<string, string>) Assertions.Peek();
 
-        assertion.WithNullAndEmptyEquality();
+        assertion.WithComparer((actual, expected) =>
+        {
+            if (actual == null && expected == string.Empty)
+            {
+                return AssertionDecision.Pass;
+            }
+
+            if (expected == null && actual == string.Empty)
+            {
+                return AssertionDecision.Pass;
+            }
+
+            return AssertionDecision.Continue;
+        });
+        
+        AppendCallerMethod([]);
         
         return this;
     }
     
     public StringEqualToAssertionBuilderWrapper IgnoringWhitespace()
     {
-        var assertion = (StringEqualsAssertCondition) Assertions.Peek();
+        var assertion = (ExpectedValueAssertCondition<string, string>) Assertions.Peek();
 
-        assertion.IgnoringWhitespace();
+        assertion.WithTransform(StringUtils.StripWhitespace, StringUtils.StripWhitespace);
+        
+        AppendCallerMethod([]);
         
         return this;
     }
+    
+
 }

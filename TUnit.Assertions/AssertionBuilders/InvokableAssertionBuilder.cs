@@ -25,27 +25,31 @@ public class InvokableAssertionBuilder<TActual> :
         
         foreach (var assertion in Assertions.Reverse())
         {
-            if (!assertion.Assert(assertionData))
+            var result = assertion.Assert(assertionData.Result, assertionData.Exception, assertionData.ActualExpression);
+            if (!result.IsPassed)
             {
+                assertion.SetSubject(assertionData.ActualExpression);
                 throw new AssertionException(
                     $"""
-                     {((IInvokableAssertionBuilder)this).GetExpression()}
-                     {assertion.OverriddenMessage ?? assertion.GetFullFailureMessage()}
+                     Expected {assertion.Subject} {assertion.GetExpectationWithReason()}, but {result.Message}.
+                     At {((IInvokableAssertionBuilder)this).GetExpression()}
                      """
                 );
             }
         }
     }
 
-    async IAsyncEnumerable<BaseAssertCondition> IInvokableAssertionBuilder.GetFailures()
+    async IAsyncEnumerable<(BaseAssertCondition Assertion, AssertionResult Result)> IInvokableAssertionBuilder.GetFailures()
     {
         var assertionData = await AssertionDataDelegate();
         
         foreach (var assertion in Assertions.Reverse())
         {
-            if (!assertion.Assert(assertionData))
+            assertion.SetSubject(assertionData.ActualExpression);
+            var result = assertion.Assert(assertionData.Result, assertionData.Exception, assertionData.ActualExpression);
+            if (!result.IsPassed)
             {
-                yield return assertion;
+                yield return (assertion, result);
             }
         }
     }
@@ -54,6 +58,13 @@ public class InvokableAssertionBuilder<TActual> :
 
     string? IInvokableAssertionBuilder.GetExpression()
     {
-        return ExpressionBuilder?.ToString();
+        var expression = ExpressionBuilder?.ToString();
+
+        if (expression?.Length < 100)
+        {
+            return expression;
+        }
+        
+        return $"{expression?[..100]}...";
     }
 }

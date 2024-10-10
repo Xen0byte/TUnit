@@ -2,7 +2,7 @@ using TUnit.Engine.SourceGenerator.Enums;
 
 namespace TUnit.Engine.SourceGenerator.Models.Arguments;
 
-internal record MethodDataSourceAttributeContainer : DataAttributeContainer
+internal record MethodDataSourceAttributeContainer : ArgumentsContainer
 {
     public MethodDataSourceAttributeContainer(ArgumentsType ArgumentsType, string TestClassTypeName, string TypeName, string MethodName, bool IsStatic, bool IsEnumerableData, string[] TupleTypes, string MethodReturnType) : base(ArgumentsType)
     {
@@ -17,11 +17,6 @@ internal record MethodDataSourceAttributeContainer : DataAttributeContainer
 
     public override void WriteVariableAssignments(SourceCodeWriter sourceCodeWriter, ref int variableIndex)
     {
-        if(!VariableNames.Any())
-        {
-            GenerateArgumentVariableNames(ref variableIndex);
-        }
-
         if (IsEnumerableData)
         {
             if (ArgumentsType == ArgumentsType.Property)
@@ -30,8 +25,8 @@ internal record MethodDataSourceAttributeContainer : DataAttributeContainer
             }
             
             var enumerableIndexName = ArgumentsType == ArgumentsType.ClassConstructor
-                ? CodeGenerators.VariableNames.EnumerableClassDataIndex
-                : CodeGenerators.VariableNames.EnumerableTestDataIndex;
+                ? CodeGenerators.VariableNames.ClassDataIndex
+                : CodeGenerators.VariableNames.TestMethodDataIndex;
             
             var dataName = ArgumentsType == ArgumentsType.ClassConstructor
                 ? CodeGenerators.VariableNames.ClassData
@@ -54,11 +49,21 @@ internal record MethodDataSourceAttributeContainer : DataAttributeContainer
                 for (var index = 0; index < TupleTypes.Length; index++)
                 {
                     var tupleType = TupleTypes[index];
-                
-                    sourceCodeWriter.WriteLine($"{tupleType} {VariableNames.ElementAt(index)} = {tupleVariableName}.Item{index+1};");
+
+                    var refIndex = index;
+                    
+                    sourceCodeWriter.WriteLine(GenerateVariable(tupleType, $"{tupleVariableName}.Item{index+1}", ref refIndex).ToString());
                 }
             }
-            
+            else
+            {
+                AddVariable(new Variable
+                {
+                    Type = "var", 
+                    Name = dataName, 
+                    Value = GetMethodInvocation()   
+                });
+            }
         }
         else if (TupleTypes.Any())
         {
@@ -73,13 +78,15 @@ internal record MethodDataSourceAttributeContainer : DataAttributeContainer
             for (var index = 0; index < TupleTypes.Length; index++)
             {
                 var tupleType = TupleTypes[index];
+
+                var refIndex = index;
                 
-                sourceCodeWriter.WriteLine($"{tupleType} {VariableNames.ElementAt(index)} = {tupleVariableName}.Item{index+1};");
+                sourceCodeWriter.WriteLine(GenerateVariable(tupleType, $"{tupleVariableName}.Item{index+1}", ref refIndex).ToString());
             }
         }
         else
         {
-            sourceCodeWriter.WriteLine($"{MethodReturnType} {VariableNames.ElementAt(0)} = {GetMethodInvocation()};");
+            sourceCodeWriter.WriteLine(GenerateVariable(MethodReturnType, GetMethodInvocation(), ref variableIndex).ToString());
         }
         
         sourceCodeWriter.WriteLine();
@@ -106,29 +113,6 @@ internal record MethodDataSourceAttributeContainer : DataAttributeContainer
             
             sourceCodeWriter.WriteLine("}");
         }
-    }
-    
-    public void GenerateArgumentVariableNames(ref int variableIndex)
-    {
-        if (TupleTypes.Any())
-        {
-            for (var index = 0; index < TupleTypes.Length; index++)
-            {
-                GenerateVariableName(ref variableIndex);
-            }
-
-            return;
-        }
-        
-        if (IsEnumerableData)
-        {
-            AddVariable(ArgumentsType == ArgumentsType.ClassConstructor
-                ? CodeGenerators.VariableNames.ClassData
-                : CodeGenerators.VariableNames.MethodData);
-            return;
-        }
-        
-        GenerateVariableName(ref variableIndex);
     }
 
     public override string[] GetArgumentTypes()

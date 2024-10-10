@@ -1,5 +1,5 @@
 ﻿using TUnit.Assertions;
-using TUnit.Assertions.Extensions.Collections;
+using TUnit.Assertions.Extensions;
 
 namespace TUnit.TestProject;
 
@@ -46,7 +46,7 @@ public class OrderedTests
     public async Task AssertOrder()
     {
         await Assert.That(RegisteredOrders)
-            .IsEquivalentTo(["First", "Second", "Third", "Fourth", "Fifth"]);
+            .IsEquivalentCollectionTo(["First", "Second", "Third", "Fourth", "Fifth"]);
     }
 
     private async Task Wait()

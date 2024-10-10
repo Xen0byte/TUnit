@@ -5,8 +5,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using TUnit.Assertions;
-using TUnit.Assertions.Extensions.Generic;
-using TUnit.Assertions.Extensions.Strings;
+using TUnit.Assertions.Extensions;
 
 namespace TUnit.TestProject;
 
@@ -116,7 +115,7 @@ public class SetupTests : Base3
     [Test]
     public async Task TestServerResponse1()
     {
-        await Assert.That(_response?.StatusCode).IsNotNull().And.IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(_response?.StatusCode).IsNotNull().And.IsEquatableOrEqualTo(HttpStatusCode.OK);
         
         await Assert.That(await _response!.Content.ReadAsStringAsync())
             .IsEqualTo("Hello TestServerResponse1!");
@@ -126,7 +125,7 @@ public class SetupTests : Base3
     public async Task TestServerResponse2()
     {
         await Assert.That(_response?.StatusCode).IsNotNull()
-            .And.IsEqualTo(HttpStatusCode.OK);
+            .And.IsEquatableOrEqualTo(HttpStatusCode.OK);
 
         await Assert.That(await _response!.Content.ReadAsStringAsync())
             .IsEqualTo("Hello TestServerResponse2!");

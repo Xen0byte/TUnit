@@ -46,6 +46,11 @@ internal static class TypeExtensions
             type = type.BaseType;
         }
     }
+    
+    public static IEnumerable<AttributeData> GetAttributesIncludingBaseTypes(this ITypeSymbol namedTypeSymbol)
+    {
+        return GetSelfAndBaseTypes(namedTypeSymbol).SelectMany(x => x.GetAttributes());
+    }
 
     public static bool IsOrInherits(this ITypeSymbol namedTypeSymbol, string typeName)
     {
@@ -119,4 +124,10 @@ internal static class TypeExtensions
         
         return false;
     }
+    
+    public static string GloballyQualified(this ITypeSymbol typeSymbol) =>
+        typeSymbol.ToDisplayString(DisplayFormats.FullyQualifiedGenericWithGlobalPrefix);
+    
+    public static string GloballyQualifiedNonGeneric(this ITypeSymbol typeSymbol) =>
+        typeSymbol.ToDisplayString(DisplayFormats.FullyQualifiedNonGenericWithGlobalPrefix);
 }

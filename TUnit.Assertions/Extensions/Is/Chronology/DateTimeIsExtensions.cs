@@ -2,25 +2,26 @@
 
 using System.Runtime.CompilerServices;
 using TUnit.Assertions.AssertConditions;
+using TUnit.Assertions.AssertConditions.Chronology;
 using TUnit.Assertions.AssertConditions.Interfaces;
 using TUnit.Assertions.AssertionBuilders;
+using TUnit.Assertions.AssertionBuilders.Wrappers;
 
-namespace TUnit.Assertions.Extensions.Chronology;
+namespace TUnit.Assertions.Extensions;
 
 public static class DateTimeIsExtensions
 {
-    public static InvokableValueAssertionBuilder<DateTime> IsBetween(this IValueSource<DateTime> valueSource, DateTime lowerBound, DateTime upperBound, [CallerArgumentExpression("lowerBound")] string doNotPopulateThisValue1 = "", [CallerArgumentExpression("upperBound")] string doNotPopulateThisValue2 = "")
+    public static DateTimeEqualToAssertionBuilderWrapper IsEqualTo(this IValueSource<DateTime> valueSource, DateTime expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue1 = "")
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<DateTime, DateTime>(default, (value, _, _, _) =>
-            {
-                return value >= lowerBound && value <= upperBound;
-            },
-            (value, _, _) => $"{value.ToLongStringWithMilliseconds()} was not between {lowerBound.ToLongStringWithMilliseconds()} and {upperBound.ToLongStringWithMilliseconds()}")
-            , [doNotPopulateThisValue1, doNotPopulateThisValue2]); }
+        return new DateTimeEqualToAssertionBuilderWrapper(
+            valueSource.RegisterAssertion(new DateTimeEqualsExpectedValueAssertCondition(expected),
+                [doNotPopulateThisValue1])
+        );
+    }
     
     public static InvokableValueAssertionBuilder<DateTime> IsAfter(this IValueSource<DateTime> valueSource, DateTime expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "")
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<DateTime, DateTime>(default, (value, _, _, _) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<DateTime, DateTime>(default, (value, _, _) =>
             {
                 return value > expected;
             },
@@ -29,7 +30,7 @@ public static class DateTimeIsExtensions
     
     public static InvokableValueAssertionBuilder<DateTime> IsAfterOrEqualTo(this IValueSource<DateTime> valueSource, DateTime expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "") 
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<DateTime, DateTime>(default, (value, _, _, _) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<DateTime, DateTime>(default, (value, _, _) =>
             {
                 return value >= expected;
             },
@@ -38,24 +39,20 @@ public static class DateTimeIsExtensions
     
     public static InvokableValueAssertionBuilder<DateTime> IsBefore(this IValueSource<DateTime> valueSource, DateTime expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "") 
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<DateTime, DateTime>(default, (value, _, _, _) =>
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<DateTime, DateTime>(default, (value, _, _) =>
             {
                 return value < expected;
             },
             (value, _, _) => $"{value.ToLongStringWithMilliseconds()} was not less than {expected.ToLongStringWithMilliseconds()}")
             , [doNotPopulateThisValue]); }
-    
-    public static InvokableValueAssertionBuilder<DateTime> IsBeforeOrEqualTo(this IValueSource<DateTime> valueSource, DateTime expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "") 
+
+    public static InvokableValueAssertionBuilder<DateTime> IsBeforeOrEqualTo(this IValueSource<DateTime> valueSource,
+        DateTime expected, [CallerArgumentExpression("expected")] string doNotPopulateThisValue = "")
     {
-        return valueSource.RegisterAssertion(new DelegateAssertCondition<DateTime, DateTime>(default, (value, _, _, _) =>
-            {
-                return value <= expected;
-            },
-            (value, _, _) => $"{value.ToLongStringWithMilliseconds()} was not less than or equal to {expected.ToLongStringWithMilliseconds()}")
-            , [doNotPopulateThisValue]); }
-    
-    public static InvokableValueAssertionBuilder<DateTime> IsEqualToWithTolerance(this IValueSource<DateTime> valueSource, DateTime expected, TimeSpan tolerance, [CallerArgumentExpression("expected")] string doNotPopulateThisValue1 = "", [CallerArgumentExpression("tolerance")] string doNotPopulateThisValue2 = "")
-    {
-        return IsBetween(valueSource, expected - tolerance, expected + tolerance, doNotPopulateThisValue1, doNotPopulateThisValue2);
+        return valueSource.RegisterAssertion(new FuncValueAssertCondition<DateTime, DateTime>(default,
+                (value, _, _) => { return value <= expected; },
+                (value, _, _) =>
+                    $"{value.ToLongStringWithMilliseconds()} was not less than or equal to {expected.ToLongStringWithMilliseconds()}")
+            , [doNotPopulateThisValue]);
     }
 }

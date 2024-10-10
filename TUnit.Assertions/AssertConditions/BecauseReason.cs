@@ -9,10 +9,9 @@ internal class BecauseReason(string reason)
         const string prefix = "because";
         string message = reason.Trim();
 
-        var messageWithoutPrefix = message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? message.Substring(prefix.Length).Trim()
-            : message;
-        return $"Because: {messageWithoutPrefix}";
+        return !message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? $", {prefix} {message}"
+            : $", {message}";
     }
 
     public override string ToString()

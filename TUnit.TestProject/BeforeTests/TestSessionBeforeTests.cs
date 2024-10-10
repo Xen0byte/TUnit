@@ -1,5 +1,5 @@
 ﻿using TUnit.Assertions;
-using TUnit.Assertions.Extensions.Generic;
+using TUnit.Assertions.Extensions;
 
 namespace TUnit.TestProject.BeforeTests;
 
@@ -35,6 +35,6 @@ public class TestSessionBeforeTests
     [Test]
     public async Task EnsureBeforeEveryTestSessionHit()
     {
-        await Assert.That(TestContext.Current?.ObjectBag["BeforeEveryTestSession"]).IsEqualTo(true);
+        await Assert.That(TestContext.Current?.ObjectBag["BeforeEveryTestSession"]).IsEquatableOrEqualTo(true);
     }
 }

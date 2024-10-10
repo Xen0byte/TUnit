@@ -43,13 +43,18 @@ internal static class TestExtensions
 
     private static string GetClassTypeName(TestDetails testDetails)
     {
+        var classTypeName = testDetails.ClassType.FullName?
+                                .Split('.', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                                .LastOrDefault()
+            ?? testDetails.ClassType.Name;
+        
         if (testDetails.TestClassArguments.Length == 0)
         {
-            return testDetails.ClassType.Name;
+            return classTypeName;
         }
         
         return
-            $"{testDetails.ClassType.Name}({string.Join(", ", testDetails.TestClassArguments.Select(GetConstantValue))})";
+            $"{classTypeName}({string.Join(", ", testDetails.TestClassArguments.Select(GetConstantValue))})";
     }
 
     private static string GetConstantValue(object? o)
